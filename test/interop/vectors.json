@@ -1,0 +1,15 @@
+{
+  "_comment": "Local stand-in for the cross-repo fixture published by Blink-Market-Core (spec §3.2). Re-pin to the official artifact when available.",
+  "private_key_seed_hex": "0000000000000000000000000000000000000000000000000000000000000000",
+  "expected_pubkey_b64": "O2onvM62pC1io6jQKm8Nc2UyFXcd4kOmOsBIoYtZ2ik=",
+  "inputs": {
+    "market_id_hex": "1111111111111111111111111111111111111111111111111111111111111111",
+    "side": 1,
+    "price_bps": 5000,
+    "size": 1000000,
+    "seq_number": 42,
+    "expires_at": 1000,
+    "pmm_hex": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "expected_message_hex": "1111111111111111111111111111111111111111111111111111111111111111018813000000000000420420f00000000000... (regenerate; see test)"
+}
