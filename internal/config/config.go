@@ -56,6 +56,9 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config: PMM_QUOTE_TTL_MS: %w", err)
 	}
+	if ttl == 0 {
+		return nil, fmt.Errorf("config: PMM_QUOTE_TTL_MS must be > 0")
+	}
 	price, err := envU64("PMM_STUB_PRICE_BPS", 5000)
 	if err != nil {
 		return nil, fmt.Errorf("config: PMM_STUB_PRICE_BPS: %w", err)
@@ -71,6 +74,9 @@ func Load() (*Config, error) {
 			return nil, fmt.Errorf("config: PMM_RATE_LIMIT_PER_MARKET_QPS: %w", perr)
 		}
 		rlQPS = f
+	}
+	if rlQPS <= 0 {
+		return nil, fmt.Errorf("config: PMM_RATE_LIMIT_PER_MARKET_QPS must be > 0, got %g", rlQPS)
 	}
 	return &Config{
 		ListenAddr:     env("PMM_LISTEN_ADDR", ":8080"),

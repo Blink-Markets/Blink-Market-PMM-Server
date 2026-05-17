@@ -12,9 +12,10 @@ import (
 )
 
 type fixture struct {
-	SeedHex string `json:"private_key_seed_hex"`
-	PubB64  string `json:"expected_pubkey_b64"`
-	Inputs  struct {
+	SeedHex            string `json:"private_key_seed_hex"`
+	PubB64             string `json:"expected_pubkey_b64"`
+	ExpectedMessageHex string `json:"expected_message_hex"`
+	Inputs             struct {
 		MarketIDHex string `json:"market_id_hex"`
 		Side        uint8  `json:"side"`
 		PriceBps    uint64 `json:"price_bps"`
@@ -55,6 +56,9 @@ func TestCrossEndSignatureInterop(t *testing.T) {
 		h32(t, in.MarketIDHex), in.Side, in.PriceBps, in.Size,
 		in.SeqNumber, in.ExpiresAt, h32(t, in.PMMHex),
 	)
+	if got := hex.EncodeToString(msg); got != fx.ExpectedMessageHex {
+		t.Fatalf("canonical message mismatch:\n got=%s\nwant=%s", got, fx.ExpectedMessageHex)
+	}
 	sig, pub, err := signer.Sign(msg)
 	if err != nil {
 		t.Fatalf("sign: %v", err)

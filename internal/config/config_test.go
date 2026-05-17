@@ -20,6 +20,8 @@ func TestLoad_DefaultsAndRequired(t *testing.T) {
 }
 
 func TestLoad_MissingKeyFails(t *testing.T) {
+	t.Setenv("PMM_PRIVATE_KEY_HEX", "")
+	t.Setenv("PMM_ADDRESS_HEX", "")
 	if _, err := Load(); err == nil {
 		t.Fatal("expected error when PMM_PRIVATE_KEY_HEX unset")
 	}
