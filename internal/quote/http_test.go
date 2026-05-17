@@ -61,3 +61,56 @@ func TestHandler_MethodNotAllowed(t *testing.T) {
 		t.Fatalf("status=%d, want 405", w.Code)
 	}
 }
+
+type stubLimiter struct{ allow bool }
+
+func (s stubLimiter) Allow(string) bool { return s.allow }
+
+func TestHandler_RateLimited(t *testing.T) {
+	h := NewHandler(newTestService(t), stubLimiter{allow: false})
+	body, _ := json.Marshal(QuoteRequest{
+		MarketID: "0x" + "11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11"+"11",
+		Side: 0, Size: 100,
+	})
+	r := httptest.NewRequest(http.MethodPost, "/v1/quote", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	if w.Code != http.StatusTooManyRequests {
+		t.Fatalf("status=%d, want 429", w.Code)
+	}
+	var env struct {
+		Error struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &env); err != nil {
+		t.Fatalf("decode envelope: %v", err)
+	}
+	if env.Error.Code != "RATE_LIMITED" {
+		t.Fatalf("error code=%q, want RATE_LIMITED", env.Error.Code)
+	}
+}
+
+func TestHandler_BadMarketID_EnvelopeShape(t *testing.T) {
+	h := NewHandler(newTestService(t), nil)
+	body, _ := json.Marshal(QuoteRequest{MarketID: "0x12", Side: 0, Size: 1})
+	r := httptest.NewRequest(http.MethodPost, "/v1/quote", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	if w.Code != 400 {
+		t.Fatalf("status=%d, want 400", w.Code)
+	}
+	var env struct {
+		Error struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &env); err != nil {
+		t.Fatalf("decode envelope: %v", err)
+	}
+	if env.Error.Code != "INVALID_INPUT" {
+		t.Fatalf("error code=%q, want INVALID_INPUT", env.Error.Code)
+	}
+}
