@@ -10,6 +10,7 @@ func newTestAllocator(t *testing.T, chainLast, fileLast uint64) *SeqAllocator {
 	t.Helper()
 	p := filepath.Join(t.TempDir(), "seq.state")
 	st := NewFileSeqStore(p)
+	// fileLast == 0 is treated as "no pre-existing file": FileSeqStore.Read() returns 0 for a missing file, so seeding 0 would be equivalent.
 	if fileLast != 0 {
 		if err := st.Write(fileLast); err != nil {
 			t.Fatalf("seed file: %v", err)
@@ -36,7 +37,10 @@ func TestSeqAllocator_StartsAtMaxPlusOne(t *testing.T) {
 
 func TestSeqAllocator_FileAhead(t *testing.T) {
 	a := newTestAllocator(t, 5, 70) // max(5,70)+1
-	n, _ := a.Next()
+	n, err := a.Next()
+	if err != nil {
+		t.Fatalf("next: %v", err)
+	}
 	if n != 71 {
 		t.Fatalf("got %d, want 71", n)
 	}
