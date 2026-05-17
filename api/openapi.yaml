@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: Blink Market PMM Quote API
+  version: "1.0.0"
+  description: >
+    Off-chain RFQ quote service. A quote is NOT a settlement guarantee:
+    it is valid only until expires_at (short TTL) and only while no
+    higher-seq quote from the same PMM has landed on-chain. Every call
+    consumes a seq number.
+paths:
+  /v1/quote:
+    post:
+      summary: Request a signed RFQ quote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [market_id, side, size]
+              properties:
+                market_id: { type: string, description: "32-byte hex, 0x-optional" }
+                side: { type: integer, enum: [0, 1], description: "0=YES, 1=NO" }
+                size: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: Signed quote; fields map 1:1 to execute_rfq arguments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  market_id: { type: string }
+                  side: { type: integer }
+                  price_bps: { type: integer, format: int64 }
+                  size: { type: integer, format: int64 }
+                  seq_number: { type: integer, format: int64 }
+                  expires_at: { type: integer, format: int64, description: "Unix ms" }
+                  pmm: { type: string }
+                  pmm_pubkey: { type: string, description: "base64, 32 bytes" }
+                  signature: { type: string, description: "base64, 64 bytes" }
+        "400": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+        "500": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+components:
+  responses:
+    Error:
+      description: Error envelope
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: object
+                properties:
+                  code: { type: string }
+                  message: { type: string }
