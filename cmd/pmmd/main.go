@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/blinkmarket/pmm-server/internal/archive"
@@ -18,6 +19,10 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("config: %v", err)
+	}
+	if os.Getenv("PMM_CHAIN_LAST_SEQ") == "" {
+		log.Printf("WARN: PMM_CHAIN_LAST_SEQ not set; seq will resync from the local file only. " +
+			"Ensure this matches the on-chain last seq for this PMM or every quote will be rejected on-chain.")
 	}
 	signer, err := sign.NewEnvKeySigner(cfg.PrivateKeySeed)
 	if err != nil {

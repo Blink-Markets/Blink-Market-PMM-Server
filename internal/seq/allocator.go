@@ -6,7 +6,7 @@ import "sync"
 // Startup: counter = max(chainLast, fileLast) + 1 (spec §7).
 type SeqAllocator struct {
 	mu      sync.Mutex
-	counter uint64
+	counter uint64 // last issued seq; Next() returns counter+1, so first issue is max(chainLast,fileLast)+1 (spec §7)
 	store   *FileSeqStore
 }
 
