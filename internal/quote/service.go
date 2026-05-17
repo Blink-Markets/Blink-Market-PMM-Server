@@ -24,20 +24,20 @@ func New(d Deps) *Service { return &Service{d: d} }
 
 func (s *Service) Quote(in QuoteInput) (*QuoteResponse, *HTTPError) {
 	if in.Side != 0 && in.Side != 1 {
-		return nil, &HTTPError{400, "INVALID_INPUT", "side must be 0 or 1"}
+		return nil, &HTTPError{Status: 400, Code: "INVALID_INPUT", Message: "side must be 0 or 1"}
 	}
 	if in.Size == 0 {
-		return nil, &HTTPError{400, "INVALID_INPUT", "size must be > 0"}
+		return nil, &HTTPError{Status: 400, Code: "INVALID_INPUT", Message: "size must be > 0"}
 	}
 
 	priceBps, err := s.d.Price(in.MarketID, in.Side, in.Size)
 	if err != nil {
-		return nil, &HTTPError{503, "PRICER_UNAVAILABLE", err.Error()}
+		return nil, &HTTPError{Status: 503, Code: "PRICER_UNAVAILABLE", Message: err.Error()}
 	}
 
 	seqNo, err := s.d.NextSeq()
 	if err != nil {
-		return nil, &HTTPError{500, "SEQ_PERSIST_FAILED", err.Error()}
+		return nil, &HTTPError{Status: 500, Code: "SEQ_PERSIST_FAILED", Message: err.Error()}
 	}
 
 	expiresAt := s.d.NowMillis() + s.d.QuoteTTL
@@ -45,7 +45,7 @@ func (s *Service) Quote(in QuoteInput) (*QuoteResponse, *HTTPError) {
 	msg := sign.EncodeMessage(in.MarketID, in.Side, priceBps, in.Size, seqNo, expiresAt, s.d.PMM)
 	sig, pub, err := s.d.Signer.Sign(msg)
 	if err != nil {
-		return nil, &HTTPError{500, "SIGN_FAILED", err.Error()}
+		return nil, &HTTPError{Status: 500, Code: "SIGN_FAILED", Message: err.Error()}
 	}
 
 	resp := &QuoteResponse{
