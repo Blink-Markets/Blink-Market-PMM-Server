@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Parse32 decodes a 32-byte value from a hex string with an optional "0x" prefix. It requires exactly 64 hex characters.
 func Parse32(s string) ([32]byte, error) {
 	var out [32]byte
 	s = strings.TrimPrefix(s, "0x")
@@ -21,6 +22,7 @@ func Parse32(s string) ([32]byte, error) {
 	return out, nil
 }
 
+// Format32 returns the "0x"-prefixed lowercase hex encoding of a.
 func Format32(a [32]byte) string {
 	return "0x" + hex.EncodeToString(a[:])
 }
