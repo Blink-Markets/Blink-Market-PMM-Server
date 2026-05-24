@@ -21,6 +21,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, &HTTPError{Status: http.StatusMethodNotAllowed, Code: "METHOD_NOT_ALLOWED", Message: "use POST"})
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 512)
 	var req QuoteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErr(w, &HTTPError{Status: 400, Code: "INVALID_INPUT", Message: "malformed JSON body"})
@@ -31,7 +32,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, &HTTPError{Status: 400, Code: "INVALID_INPUT", Message: "market_id must be 32-byte hex"})
 		return
 	}
-	if h.rl != nil && !h.rl.Allow(req.MarketID) {
+	if h.rl != nil && !h.rl.Allow(hexutil.Format32(mkt)) {
 		writeErr(w, &HTTPError{Status: 429, Code: "RATE_LIMITED", Message: "too many quote requests for this market"})
 		return
 	}

@@ -55,6 +55,14 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/v1/quote", quote.NewHandler(svc, ratelimit.New(cfg.RateLimitQPS)))
+	srv := &http.Server{
+		Addr:              cfg.ListenAddr,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 	log.Printf("pmmd listening on %s", cfg.ListenAddr)
-	log.Fatal(http.ListenAndServe(cfg.ListenAddr, mux))
+	log.Fatal(srv.ListenAndServe())
 }

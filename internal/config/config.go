@@ -63,6 +63,9 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config: PMM_STUB_PRICE_BPS: %w", err)
 	}
+	if price > 10000 {
+		return nil, fmt.Errorf("config: PMM_STUB_PRICE_BPS must be 0..10000, got %d", price)
+	}
 	chainSeq, err := envU64("PMM_CHAIN_LAST_SEQ", 0)
 	if err != nil {
 		return nil, fmt.Errorf("config: PMM_CHAIN_LAST_SEQ: %w", err)

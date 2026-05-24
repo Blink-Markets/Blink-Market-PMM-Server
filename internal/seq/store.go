@@ -3,6 +3,7 @@ package seq
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -29,11 +30,36 @@ func (s *FileSeqStore) Read() (uint64, error) {
 
 func (s *FileSeqStore) Write(v uint64) error {
 	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, []byte(strconv.FormatUint(v, 10)), 0o600); err != nil {
+	f, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
 		return fmt.Errorf("seqstore write tmp: %w", err)
+	}
+	_, werr := fmt.Fprintf(f, "%d", v)
+	serr := f.Sync()
+	cerr := f.Close()
+	if werr != nil {
+		return fmt.Errorf("seqstore write tmp: %w", werr)
+	}
+	if serr != nil {
+		return fmt.Errorf("seqstore fsync tmp: %w", serr)
+	}
+	if cerr != nil {
+		return fmt.Errorf("seqstore close tmp: %w", cerr)
 	}
 	if err := os.Rename(tmp, s.path); err != nil {
 		return fmt.Errorf("seqstore rename: %w", err)
+	}
+	// fsync the parent directory so the rename itself survives a crash:
+	// without this the seq could regress on restart and a signed seq be
+	// reissued, producing quotes the chain will reject as stale.
+	df, err := os.Open(filepath.Dir(s.path))
+	if err != nil {
+		return fmt.Errorf("seqstore fsync dir: %w", err)
+	}
+	derr := df.Sync()
+	df.Close()
+	if derr != nil {
+		return fmt.Errorf("seqstore fsync dir: %w", derr)
 	}
 	return nil
 }
